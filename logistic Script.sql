@@ -1,0 +1,184 @@
+CREATE DATABASE LOGISTIC_DB;
+USE logistic_db;
+
+SELECT C_TYPE, COUNT(C_ID) AS TOTAL_CUSTOMER_TYPE
+FROM CUSTOMER
+GROUP BY C_TYPE
+ORDER BY TOTAL_CUSTOMER_TYPE DESC;
+
+SELECT SER_TYPE, COUNT(C_ID) AS TOTAL_CUSTOMER_SER_TYPE
+FROM shipment_details
+GROUP BY SER_TYPE
+ORDER BY TOTAL_CUSTOMER_SER_TYPE DESC;
+
+SELECT E_BRANCH, COUNT(E_ID) AS TOTAL_EMP_BRANCH,
+sum(Amount) as TOTAL_AMOUNT
+FROM employee_details
+RIGHT JOIN employee_manages_shipment
+ON employee_details.E_ID = employee_manages_shipment.Employee_E_ID
+JOIN payment_details
+ON payment_details.SH_ID = employee_manages_shipment.Shipment_Sh_ID
+group by e_branch
+order by TOTAL_EMP_BRANCH desc;
+
+
+SELECT E_DESIGNATION, COUNT(E_ID) AS TOTAL_EMPLOYEE_DESIGNATION
+FROM employee_details
+GROUP BY E_DESIGNATION
+ORDER BY TOTAL_EMPLOYEE_DESIGNATION DESC;
+
+SELECT C_NAME, PAYMENT_MODE, SER_TYPE
+FROM PAYMENT_DETAILS
+LEFT JOIN SHIPMENT_DETAILS
+ON PAYMENT_DETAILS.C_ID = SHIPMENT_DETAILS.C_ID
+JOIN CUSTOMER
+ON CUSTOMER.C_ID = SHIPMENT_DETAILS.C_ID
+WHERE PAYMENT_MODE = 'CARD PAYMENT' AND SER_TYPE = 'REGULAR';
+
+
+SELECT E_NAME, E_DESIGNATION, CURRENT_STATUS, DELIVERY_DATE
+FROM EMPLOYEE_DETAILS
+LEFT JOIN EMPLOYEE_MANAGES_SHIPMENT
+ON EMPLOYEE_DETAILS.E_ID = EMPLOYEE_MANAGES_SHIPMENT.EMPLOYEE_E_ID
+JOIN STATUS
+ON STATUS.SH_ID = EMPLOYEE_MANAGES_SHIPMENT.STATUS_SH_ID
+WHERE E_DESIGNATION = 'DELIVERY BOY';
+
+-- QUESTION 8
+-- QUESTION 8: MEMBERSHIP TENURE ABOVE 10 YEARS
+SELECT C.C_ID, M.M_ID, M.Start_date, M.End_date,
+TIMESTAMPDIFF(YEAR, M.Start_date, M.End_date) AS TENURE
+FROM CUSTOMER C
+INNER JOIN MEMBERSHIP M
+ON C.M_ID = M.M_ID
+WHERE M.End_date > DATE_ADD(M.Start_date, INTERVAL 10 YEAR)
+ORDER BY TENURE DESC;
+
+-- QUESTION 9
+SELECT c.C_TYPE,
+ROUND(AVG(p.AMOUNT), 2) AS AVERAGE_PAYMENT
+FROM Customer c
+RIGHT JOIN Payment_Details p
+    ON c.C_ID = p.C_ID
+WHERE p.Payment_Mode = 'COD'
+GROUP BY c.C_TYPE
+ORDER BY AVERAGE_PAYMENT DESC;
+
+-- QUESTION 10
+SELECT Payment_Mode,
+    ROUND(AVG(AMOUNT), 2) AS AVERAGE_PAYMENT
+FROM Payment_Details
+WHERE Payment_Date IS NOT NULL
+GROUP BY Payment_Mode
+ORDER BY AVERAGE_PAYMENT DESC;
+
+-- QUESTION 11
+SELECT p.Payment_Status,
+    ROUND(AVG(s.SH_WEIGHT), 2) AS AVERAGE_WEIGHT
+FROM Payment_Details p
+INNER JOIN Shipment_Details s
+    ON p.SH_ID = s.SH_ID
+WHERE s.SH_CONTENT NOT LIKE 'H'
+GROUP BY p.Payment_Status
+ORDER BY AVERAGE_WEIGHT DESC;
+
+-- QUESTION 12
+SELECT E_NAME, E_DESIGNATION, E_BRANCH
+FROM Employee_Details
+WHERE E_BRANCH = 'NY';
+
+-- QUESTION 13
+SELECT C_TYPE, COUNT(C_ID) AS TOTAL_CUSTOMERS
+FROM Customer
+GROUP BY C_TYPE
+ORDER BY TOTAL_CUSTOMERS DESC;
+
+-- QUESTION 14
+SELECT DISTINCT c.C_ID, c.C_NAME, m.M_ID, m.Start_date, m.End_date, P.PAYMENT_STATUS
+FROM Customer c
+INNER JOIN Membership m
+    ON c.M_ID = m.M_ID
+INNER JOIN Payment_Details p
+    ON c.C_ID = p.C_ID
+WHERE p.Payment_Status = 'PAID';
+
+-- QUESTION 15
+SELECT DISTINCT c.C_ID, c.C_NAME, p.Payment_Mode, s.SER_TYPE
+FROM Customer c
+INNER JOIN Payment_Details p
+    ON c.C_ID = p.C_ID
+INNER JOIN Shipment_Details s
+    ON p.SH_ID = s.SH_ID
+WHERE p.Payment_Mode = 'CARD PAYMENT'
+AND s.SER_TYPE = 'Regular';
+
+-- QUESTION 16
+SELECT SH_DOMAIN,
+ROUND(AVG(SH_WEIGHT), 2) AS AVERAGE_WEIGHT
+FROM Shipment_Details
+GROUP BY SH_DOMAIN
+ORDER BY AVERAGE_WEIGHT DESC;
+
+-- QUESTION 17
+SELECT s.SH_ID, c.C_NAME, s.SH_CHARGES
+FROM Shipment_Details s
+INNER JOIN Customer c
+    ON s.C_ID = c.C_ID 
+    WHERE s.SH_CHARGES = (
+    SELECT MAX(SH_CHARGES)
+    FROM Shipment_Details);
+
+-- QUESTION 18
+SELECT COUNT(DISTINCT s.SH_ID) AS TOTAL_SHIPMENTS
+FROM Shipment_Details s
+INNER JOIN Status st
+    ON s.SH_ID = st.SH_ID
+WHERE s.SER_TYPE = 'Express'
+AND st.Current_Status = 'NOT DELIVERED';
+
+-- QUESTION 19
+SELECT C_NAME, C_EMAIL_ID, PAYMENT_STATUS, E_BRANCH
+FROM Customer c
+INNER JOIN Payment_Details p
+ON c.C_ID = p.C_ID
+JOIN employee_manages_shipment
+ON P.SH_ID = employee_manages_shipment.Shipment_Sh_ID
+JOIN employee_details
+ON employee_details.E_ID = employee_manages_shipment.Employee_E_ID
+WHERE P.PAYMENT_STATUS = 'NOT PAID' AND employee_details.E_BRANCH = 'CA';
+
+
+-- QUESTION 20
+SELECT e.E_NAME, e.E_DESIGNATION, em.Shipment_Sh_ID AS SH_ID, st.Current_Status, st.Delivery_date
+FROM Employee_Details e
+INNER JOIN employee_manages_shipment em
+    ON e.E_ID = em.Employee_E_ID
+INNER JOIN Status st
+    ON em.Status_Sh_ID = st.SH_ID
+WHERE e.E_DESIGNATION = 'Delivery Boy';
+
+-- QUESTION 21
+SELECT DISTINCT c.C_ID, c.C_NAME, m.M_ID, m.Start_date, m.End_date, st.Current_Status
+FROM Customer c
+INNER JOIN Membership m
+    ON c.M_ID = m.M_ID
+INNER JOIN Shipment_Details s
+    ON c.C_ID = s.C_ID
+INNER JOIN Status st
+    ON s.SH_ID = st.SH_ID
+WHERE st.Current_Status = 'NOT DELIVERED';
+
+
+SELECT * FROM customer;
+
+SELECT * FROM employee_details;
+
+SELECT * FROM employee_manages_shipment;
+
+SELECT * FROM membership;
+
+SELECT * FROM payment_details;
+
+SELECT * FROM shipment_details;
+
+SELECT * FROM status
